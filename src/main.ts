@@ -65,9 +65,49 @@ program
 program
   .command('generate <text>')
   .description('Generate an image from text (for testing)')
-  .action((text: string) => {
-    console.log(`🎨 Generating image for: "${text}"`);
-    console.log('TODO: Implement Gemini integration');
+  .option('-s, --style <style>', 'Image style: watercolor, crayon, picture-book')
+  .option('-m, --mood <mood>', 'Image mood: happy, exciting, calm')
+  .action(async (text: string, options) => {
+    const { generateImage, GeminiError } = await import('./ai/index.js');
+
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      console.error('❌ GEMINI_API_KEY is not set');
+      console.log('   Please set it in config/.env or export GEMINI_API_KEY=...');
+      process.exit(1);
+    }
+
+    try {
+      console.log('\n🎨 echoDialy - 画像生成\n');
+
+      const result = await generateImage(
+        {
+          prompt: text,
+          style: options.style as any,
+          mood: options.mood as any,
+        },
+        {
+          apiKey: geminiApiKey,
+          enableLogging: true,
+        }
+      );
+
+      console.log('\n✅ 画像生成完了！');
+      console.log(`   プロンプト: "${result.prompt}"`);
+      console.log(`   画像パス: ${result.imagePath}`);
+      console.log(`   モデル: ${result.modelUsed}`);
+      console.log(`   生成時間: ${result.generationTime}ms`);
+
+    } catch (error) {
+      if (error instanceof GeminiError) {
+        console.error(`\n❌ エラー: ${error.message}`);
+        console.error(`   コード: ${error.code}`);
+        console.error(`   再試行可能: ${error.retryable ? 'はい' : 'いいえ'}`);
+      } else if (error instanceof Error) {
+        console.error(`\n❌ エラー: ${error.message}`);
+      }
+      process.exit(1);
+    }
   });
 
 program.parse();

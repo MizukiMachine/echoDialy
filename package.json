@@ -17,7 +17,13 @@
     "type": "git",
     "url": "git+https://github.com/MizukiMachine/echoDialy.git"
   },
-  "keywords": ["diary", "voice", "ai", "children", "gemini"],
+  "keywords": [
+    "diary",
+    "voice",
+    "ai",
+    "children",
+    "gemini"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -30,6 +36,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "commander": "^14.0.3"
+    "commander": "^14.0.3",
+    "openai": "^6.22.0"
   }
 }

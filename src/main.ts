@@ -17,9 +17,41 @@ program
 program
   .command('record')
   .description('Record a new diary entry via voice input')
-  .action(() => {
-    console.log('🎙️  Recording diary entry...');
-    console.log('TODO: Implement voice recording');
+  .option('-d, --duration <seconds>', 'Recording duration in seconds', '10')
+  .action(async (options) => {
+    const { recordVoice, editText } = await import('./voice/index.js');
+
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      console.error('❌ OPENAI_API_KEY is not set');
+      console.log('   Please set it in config/.env or export OPENAI_API_KEY=...');
+      process.exit(1);
+    }
+
+    const duration = parseInt(options.duration, 10);
+
+    try {
+      console.log('\n🎤 echoDialy - 音声日記録音\n');
+
+      // 音声録音＆Whisper APIでテキスト化
+      const result = await recordVoice({
+        openaiApiKey,
+        duration,
+      });
+
+      // テキスト確認・編集
+      const finalText = await editText(result.text);
+
+      console.log('\n✅ 日記エントリー作成完了！');
+      console.log(`   テキスト: "${finalText}"`);
+      console.log(`   音声ファイル: ${result.audioPath}`);
+
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`\n❌ エラー: ${error.message}`);
+      }
+      process.exit(1);
+    }
   });
 
 program

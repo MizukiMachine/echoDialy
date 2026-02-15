@@ -57,9 +57,100 @@ program
 program
   .command('list')
   .description('List all diary entries')
-  .action(() => {
-    console.log('📖 Diary entries:');
-    console.log('TODO: Implement list functionality');
+  .option('-s, --search <text>', 'Search text in entries')
+  .option('-d, --date <date>', 'Filter by date (YYYY-MM-DD)')
+  .option('-S, --style <style>', 'Filter by art style')
+  .option('-m, --mood <mood>', 'Filter by mood')
+  .option('--sort <field>', 'Sort by field: date, createdAt')
+  .option('--order <order>', 'Sort order: asc, desc', 'desc')
+  .option('-n, --limit <number>', 'Limit number of results')
+  .action(async (options) => {
+    const {
+      listDiaries,
+      searchDiaries,
+      getDiariesByDate,
+      getStorageStats,
+    } = await import('./storage/index.js');
+
+    try {
+      console.log('\n📖 echoDialy - 日記一覧\n');
+
+      let entries;
+
+      if (options.search) {
+        // Search mode
+        entries = await searchDiaries(options.search, {
+          filter: {
+            startDate: options.date,
+            style: options.style,
+            mood: options.mood,
+          },
+          sort: options.sort || options.order ? {
+            field: options.sort as any,
+            order: options.order as any,
+          } : undefined,
+          limit: options.limit ? parseInt(options.limit, 10) : undefined,
+        });
+        console.log(`🔍 検索結果: "${options.search}"\n`);
+
+      } else if (options.date) {
+        // Date filter mode
+        entries = await getDiariesByDate(options.date);
+        console.log(`📅 ${options.date}の日記\n`);
+
+      } else {
+        // List all with filters
+        entries = await listDiaries({
+          filter: {
+            startDate: options.date,
+            style: options.style,
+            mood: options.mood,
+          },
+          sort: options.sort || options.order ? {
+            field: options.sort as any,
+            order: options.order as any,
+          } : undefined,
+          limit: options.limit ? parseInt(options.limit, 10) : undefined,
+        });
+        console.log('全日記\n');
+      }
+
+      if (entries.length === 0) {
+        console.log('日記が見つかりませんでした。');
+      } else {
+        // Display entries
+        entries.forEach((entry, index) => {
+          console.log(`--- [${index + 1}] ${entry.id} ---`);
+          console.log(`日付: ${entry.date}`);
+          console.log(`内容: ${entry.audioText}`);
+          if (entry.style) console.log(`スタイル: ${entry.style}`);
+          if (entry.mood) console.log(`雰囲気: ${entry.mood}`);
+          console.log(`画像: ${entry.imagePath}`);
+          console.log(`作成日時: ${entry.createdAt}`);
+          console.log();
+        });
+
+        // Show stats
+        const stats = await getStorageStats();
+        console.log(`--- 統計 ---`);
+        console.log(`総エントリー数: ${stats.totalEntries}`);
+        if (stats.dateRange) {
+          console.log(`日付範囲: ${stats.dateRange.earliest} ~ ${stats.dateRange.latest}`);
+        }
+        if (Object.keys(stats.styleCounts).length > 0) {
+          console.log('スタイル別件数:');
+          Object.entries(stats.styleCounts).forEach(([style, count]) => {
+            console.log(`  ${style}: ${count}件`);
+          });
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`\n❌ エラー: ${error.message}`);
+      }
+      process.exit(1);
+    }
   });
 
 program

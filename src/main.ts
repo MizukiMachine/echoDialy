@@ -110,4 +110,87 @@ program
     }
   });
 
+program
+  .command('prompts:test <text>')
+  .description('Test prompt engineering (show generated prompts)')
+  .option('-t, --template <name>', 'Template: simple, standard, detailed, pictureBook', 'standard')
+  .option('-s, --style <style>', 'Style: watercolor, crayon, picture-book, anime, pastel')
+  .option('-m, --mood <mood>', 'Mood: happy, exciting, calm, nostalgic, warm')
+  .option('-a, --age <number>', 'Target age', '5')
+  .option('--ab', 'Enable A/B testing mode')
+  .action(async (text: string, options) => {
+    const {
+      buildDiaryPrompt,
+      PromptExperiment,
+      getAvailableTemplates,
+      validatePromptOptions,
+    } = await import('./prompts/index.js');
+
+    try {
+      console.log('\n📝 echoDialy - プロンプトエンジニアリング\n');
+
+      const promptOptions = {
+        userInput: text,
+        style: options.style as any,
+        mood: options.mood as any,
+        age: parseInt(options.age, 10),
+      };
+
+      // Validation
+      if (!validatePromptOptions(promptOptions)) {
+        console.error('❌ Invalid prompt options');
+        process.exit(1);
+      }
+
+      if (options.ab) {
+        // A/B Testing mode
+        console.log('🔬 A/Bテストモード\n');
+
+        const experiment = new PromptExperiment({
+          basePrompt: promptOptions,
+          variations: [
+            { style: 'watercolor' },
+            { style: 'crayon' },
+            { style: 'picture-book' },
+          ],
+          maxVariations: 3,
+        });
+
+        const result = experiment.generateVariations();
+
+        console.log(`Experiment ID: ${result.experimentId}`);
+        console.log(`Timestamp: ${result.timestamp}\n`);
+
+        result.variations.forEach((v, i) => {
+          console.log(`--- ${v.version} ---`);
+          console.log(v.prompt);
+          console.log();
+        });
+
+      } else {
+        // Single prompt mode
+        const template = getAvailableTemplates()[options.template];
+        if (!template) {
+          console.error(`❌ Template "${options.template}" not found`);
+          process.exit(1);
+        }
+
+        const prompt = buildDiaryPrompt(promptOptions, options.template);
+
+        console.log(`Template: ${template.name}`);
+        console.log(`Description: ${template.description}\n`);
+        console.log('Generated Prompt:');
+        console.log('---');
+        console.log(prompt);
+        console.log('---');
+      }
+
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`\n❌ エラー: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
 program.parse();

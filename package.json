@@ -1,0 +1,35 @@
+{
+  "name": "echodialy",
+  "version": "1.0.0",
+  "description": "Digital diary app for children using voice input",
+  "main": "dist/main.js",
+  "type": "module",
+  "bin": {
+    "echodialy": "./dist/main.js"
+  },
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MizukiMachine/echoDialy.git"
+  },
+  "keywords": ["diary", "voice", "ai", "children", "gemini"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MizukiMachine/echoDialy/issues"
+  },
+  "homepage": "https://github.com/MizukiMachine/echoDialy#readme",
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  }
+}
